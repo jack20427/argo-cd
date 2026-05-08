@@ -4,7 +4,8 @@ import * as React from 'react';
 import {Context} from '../../../shared/context';
 import {Application, ApplicationDestination, Cluster, HealthStatusCode, HealthStatuses, SyncPolicy, SyncStatusCode, SyncStatuses} from '../../../shared/models';
 import {AppsListPreferences, services} from '../../../shared/services';
-import {Filter, FiltersGroup} from '../filter/filter';
+import {CheckboxRow, Filter, FiltersGroup} from '../filter/filter';
+import './applications-list-labels-filter.scss';
 import * as LabelSelector from '../label-selector';
 import {ComparisonStatusIcon, getAppDefaultSource, HealthStatusIcon} from '../utils';
 
@@ -144,16 +145,109 @@ const LabelsFilter = (props: AppFilterProps) => {
                 values.add(app.metadata.labels[label]);
             })
         );
-    const suggestions = new Array<string>();
-    Array.from(labels.entries()).forEach(([label, values]) => {
-        suggestions.push(label);
-        values.forEach(val => suggestions.push(`${label}=${val}`));
-    });
-    const labelOptions = suggestions.map(s => {
-        return {label: s};
-    });
 
-    return <Filter label='LABELS' selected={props.pref.labelsFilter} setSelected={s => props.onChange({...props.pref, labelsFilter: s})} field={true} options={labelOptions} />;
+    const selected = props.pref.labelsFilter || [];
+    const setSelected = (next: string[]) => props.onChange({...props.pref, labelsFilter: next});
+
+    const [search, setSearch] = React.useState('');
+    const [expanded, setExpanded] = React.useState<{[k: string]: boolean}>({});
+    const [collapsed, setCollapsed] = React.useState(false);
+
+    const toggleSelected = (item: string, on: boolean) => {
+        if (on) {
+            if (!selected.includes(item)) setSelected([...selected, item]);
+        } else {
+            setSelected(selected.filter(s => s !== item));
+        }
+    };
+
+    const groups = Array.from(labels.entries())
+        .map(([key, valueSet]) => ({
+            key,
+            values: Array.from(valueSet).sort()
+        }))
+        .sort((a, b) => a.key.localeCompare(b.key));
+
+    const term = search.trim().toLowerCase();
+    const filteredGroups = !term
+        ? groups
+        : groups
+              .map(g => {
+                  const keyHit = g.key.toLowerCase().includes(term);
+                  const matchedValues = keyHit ? g.values : g.values.filter(v => v.toLowerCase().includes(term));
+                  return {key: g.key, values: matchedValues, keyHit};
+              })
+              .filter(g => g.keyHit || g.values.length > 0);
+
+    const isGroupExpanded = (key: string) => {
+        if (term) return true;
+        if (key in expanded) return expanded[key];
+        return selected.some(s => s === key || s.startsWith(`${key}=`));
+    };
+
+    const hasSelection = selected.length > 0;
+
+    return (
+        <div className='filter' key={`labels-${groups.length}`}>
+            <div className='filter__header'>
+                LABELS
+                {hasSelection ? (
+                    <button className='argo-button argo-button--base argo-button--sm argo-button--right' onClick={() => setSelected([])}>
+                        <i className='fa fa-times-circle' /> CLEAR
+                    </button>
+                ) : (
+                    <i className={`fa fa-caret-${collapsed ? 'down' : 'up'} filter__collapse`} onClick={() => setCollapsed(!collapsed)} />
+                )}
+            </div>
+            {!collapsed && (
+                <div className='labels-tree-filter'>
+                    <input
+                        className='labels-tree-filter__search'
+                        placeholder='LABELS'
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                    {filteredGroups.length === 0 && <div className='labels-tree-filter__empty'>No labels</div>}
+                    {filteredGroups.map(group => {
+                        const open = isGroupExpanded(group.key);
+                        const keySelected = selected.includes(group.key);
+                        return (
+                            <div key={group.key} className='labels-tree-filter__group'>
+                                <div
+                                    className='labels-tree-filter__group-header'
+                                    onClick={() => setExpanded({...expanded, [group.key]: !open})}>
+                                    <i className={`fa fa-caret-right labels-tree-filter__group-header__caret${open ? ' labels-tree-filter__group-header__caret--expanded' : ''}`} />
+                                    <Checkbox
+                                        value={keySelected}
+                                        onChange={(val: boolean) => toggleSelected(group.key, val)}
+                                        style={{marginRight: '8px'}}
+                                    />
+                                    <span className='labels-tree-filter__group-header__label' onClick={e => {
+                                        e.stopPropagation();
+                                        toggleSelected(group.key, !keySelected);
+                                    }}>{group.key}</span>
+                                    <span className='labels-tree-filter__group-header__count'>{group.values.length}</span>
+                                </div>
+                                {open &&
+                                    group.values.map(val => {
+                                        const item = `${group.key}=${val}`;
+                                        return (
+                                            <div key={item} className='labels-tree-filter__child'>
+                                                <CheckboxRow
+                                                    value={selected.includes(item)}
+                                                    onChange={(on: boolean) => toggleSelected(item, on)}
+                                                    option={{label: val}}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
 };
 
 const ProjectFilter = (props: AppFilterProps) => {
