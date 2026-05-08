@@ -150,7 +150,6 @@ const LabelsFilter = (props: AppFilterProps) => {
     const setSelected = (next: string[]) => props.onChange({...props.pref, labelsFilter: next});
 
     const [search, setSearch] = React.useState('');
-    const [expanded, setExpanded] = React.useState<{[k: string]: boolean}>({});
     const [collapsed, setCollapsed] = React.useState(false);
 
     const toggleSelected = (item: string, on: boolean) => {
@@ -161,34 +160,24 @@ const LabelsFilter = (props: AppFilterProps) => {
         }
     };
 
-    const groups = Array.from(labels.entries())
-        .map(([key, valueSet]) => ({
-            key,
-            values: Array.from(valueSet).sort()
-        }))
-        .sort((a, b) => a.key.localeCompare(b.key));
+    const items: {key: string; value: string; item: string}[] = [];
+    Array.from(labels.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([key, valueSet]) => {
+            Array.from(valueSet)
+                .sort()
+                .forEach(value => items.push({key, value, item: `${key}=${value}`}));
+        });
 
     const term = search.trim().toLowerCase();
-    const filteredGroups = !term
-        ? groups
-        : groups
-              .map(g => {
-                  const keyHit = g.key.toLowerCase().includes(term);
-                  const matchedValues = keyHit ? g.values : g.values.filter(v => v.toLowerCase().includes(term));
-                  return {key: g.key, values: matchedValues, keyHit};
-              })
-              .filter(g => g.keyHit || g.values.length > 0);
-
-    const isGroupExpanded = (key: string) => {
-        if (term) return true;
-        if (key in expanded) return expanded[key];
-        return selected.some(s => s === key || s.startsWith(`${key}=`));
-    };
+    const visibleItems = !term
+        ? items
+        : items.filter(({key, value}) => key.toLowerCase().includes(term) || value.toLowerCase().includes(term));
 
     const hasSelection = selected.length > 0;
 
     return (
-        <div className='filter' key={`labels-${groups.length}`}>
+        <div className='filter' key={`labels-${items.length}`}>
             <div className='filter__header'>
                 LABELS
                 {hasSelection ? (
@@ -207,43 +196,16 @@ const LabelsFilter = (props: AppFilterProps) => {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
-                    {filteredGroups.length === 0 && <div className='labels-tree-filter__empty'>No labels</div>}
-                    {filteredGroups.map(group => {
-                        const open = isGroupExpanded(group.key);
-                        const keySelected = selected.includes(group.key);
-                        return (
-                            <div key={group.key} className='labels-tree-filter__group'>
-                                <div
-                                    className='labels-tree-filter__group-header'
-                                    onClick={() => setExpanded({...expanded, [group.key]: !open})}>
-                                    <i className={`fa fa-caret-right labels-tree-filter__group-header__caret${open ? ' labels-tree-filter__group-header__caret--expanded' : ''}`} />
-                                    <Checkbox
-                                        value={keySelected}
-                                        onChange={(val: boolean) => toggleSelected(group.key, val)}
-                                        style={{marginRight: '8px'}}
-                                    />
-                                    <span className='labels-tree-filter__group-header__label' onClick={e => {
-                                        e.stopPropagation();
-                                        toggleSelected(group.key, !keySelected);
-                                    }}>{group.key}</span>
-                                    <span className='labels-tree-filter__group-header__count'>{group.values.length}</span>
-                                </div>
-                                {open &&
-                                    group.values.map(val => {
-                                        const item = `${group.key}=${val}`;
-                                        return (
-                                            <div key={item} className='labels-tree-filter__child'>
-                                                <CheckboxRow
-                                                    value={selected.includes(item)}
-                                                    onChange={(on: boolean) => toggleSelected(item, on)}
-                                                    option={{label: val}}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        );
-                    })}
+                    {visibleItems.length === 0 && <div className='labels-tree-filter__empty'>No labels</div>}
+                    {visibleItems.map(({key, value, item}) => (
+                        <div key={item} title={`${key}=${value}`}>
+                            <CheckboxRow
+                                value={selected.includes(item)}
+                                onChange={(on: boolean) => toggleSelected(item, on)}
+                                option={{label: value}}
+                            />
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

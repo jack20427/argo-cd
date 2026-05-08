@@ -1,8 +1,6 @@
 @import 'node_modules/argo-ui/src/styles/config';
 @import 'node_modules/argo-ui/src/styles/theme';
 
-$slate: #191826;
-
 .labels-tree-filter {
     &__search {
         width: 100%;
@@ -18,54 +16,6 @@ $slate: #191826;
         &:focus {
             outline: 1px solid $argo-color-gray-6;
         }
-    }
-
-    &__group {
-        margin-bottom: 0.15em;
-    }
-
-    &__group-header {
-        display: flex;
-        align-items: center;
-        height: 2em;
-        padding: 0 5px;
-        border-radius: 5px;
-        cursor: pointer;
-        color: $argo-color-gray-5;
-        font-weight: 500;
-
-        &:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        &__caret {
-            width: 14px;
-            margin-right: 4px;
-            font-size: 11px;
-            text-align: center;
-            transition: transform 0.15s;
-
-            &--expanded {
-                transform: rotate(90deg);
-            }
-        }
-
-        &__label {
-            flex-grow: 1;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        &__count {
-            font-size: 11px;
-            color: $argo-color-gray-6;
-            margin-left: auto;
-        }
-    }
-
-    &__child {
-        padding-left: 22px;
     }
 
     &__empty {
