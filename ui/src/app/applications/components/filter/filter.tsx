@@ -11,6 +11,7 @@ interface FilterProps {
     labels?: string[];
     abbreviations?: Map<string, string>;
     field?: boolean;
+    flatList?: boolean;
     error?: boolean;
     retry?: () => void;
     loading?: boolean;
@@ -142,35 +143,50 @@ export const Filter = (props: FilterProps) => {
                     <FilterError retry={props.retry} />
                 ) : (
                     <React.Fragment>
-                        {props.field && (
-                            <Autocomplete
+                        {props.flatList ? (
+                            <input
+                                className='filter__flat-search'
                                 placeholder={props.label}
-                                items={labels}
-                                abbreviations={props.abbreviations}
                                 value={input}
                                 onChange={e => setInput(e.target.value)}
-                                onItemClick={val => {
-                                    const update = {...values};
-                                    update[val ? val : input] = true;
-                                    setInput('');
-                                    setValues(update);
-                                }}
-                                style={{width: '100%'}}
-                                inputStyle={{marginBottom: '0.5em', backgroundColor: 'black', border: 'none', color: '#fff'}}
                             />
+                        ) : (
+                            props.field && (
+                                <Autocomplete
+                                    placeholder={props.label}
+                                    items={labels}
+                                    abbreviations={props.abbreviations}
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onItemClick={val => {
+                                        const update = {...values};
+                                        update[val ? val : input] = true;
+                                        setInput('');
+                                        setValues(update);
+                                    }}
+                                    style={{width: '100%'}}
+                                    inputStyle={{marginBottom: '0.5em', backgroundColor: 'black', border: 'none', color: '#fff'}}
+                                />
+                            )
                         )}
-                        {((props.field ? tags : options) || []).map((opt, i) => (
-                            <CheckboxRow
-                                key={i}
-                                value={values[opt.label]}
-                                onChange={val => {
-                                    const update = props.radio && val ? {} : {...values};
-                                    update[opt.label] = val;
-                                    setValues(update);
-                                }}
-                                option={opt}
-                            />
-                        ))}
+                        {(() => {
+                            const term = (input || '').trim().toLowerCase();
+                            const list = props.flatList
+                                ? (options || []).filter(o => !term || o.label.toLowerCase().includes(term))
+                                : (props.field ? tags : options) || [];
+                            return list.map((opt, i) => (
+                                <CheckboxRow
+                                    key={i}
+                                    value={values[opt.label]}
+                                    onChange={val => {
+                                        const update = props.radio && val ? {} : {...values};
+                                        update[opt.label] = val;
+                                        setValues(update);
+                                    }}
+                                    option={opt}
+                                />
+                            ));
+                        })()}
                     </React.Fragment>
                 ))}
         </div>

@@ -227,6 +227,7 @@ const ProjectFilter = (props: AppFilterProps) => {
             selected={props.pref.projectsFilter}
             setSelected={s => props.onChange({...props.pref, projectsFilter: s})}
             field={true}
+            flatList={true}
             options={projectOptions}
             error={error.state}
             retry={error.retry}
@@ -259,6 +260,7 @@ const ClusterFilter = (props: AppFilterProps) => {
             selected={props.pref.clustersFilter}
             setSelected={s => props.onChange({...props.pref, clustersFilter: s})}
             field={true}
+            flatList={true}
             options={clusterOptions}
             error={error.state}
             retry={error.retry}
@@ -275,6 +277,7 @@ const NamespaceFilter = (props: AppFilterProps) => {
             selected={props.pref.namespacesFilter}
             setSelected={s => props.onChange({...props.pref, namespacesFilter: s})}
             field={true}
+            flatList={true}
             options={namespaceOptions}
         />
     );
