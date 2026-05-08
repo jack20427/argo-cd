@@ -123,7 +123,7 @@ export const Filter = (props: FilterProps) => {
         <div className='filter' key={totalCount + props.label}>
             <div className='filter__header'>
                 {props.label || 'FILTER'}
-                {(props.selected || []).length > 0 || (props.field && Object.keys(values).length > 0) ? (
+                {(props.selected || []).length > 0 || (props.field && !props.flatList && Object.keys(values).length > 0) ? (
                     <button
                         className='argo-button argo-button--base argo-button--sm argo-button--right'
                         onClick={() => {

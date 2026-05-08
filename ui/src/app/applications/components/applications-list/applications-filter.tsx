@@ -66,6 +66,14 @@ const optionsFrom = (options: string[], filter: string[]) => {
         });
 };
 
+const optionsIncludingSelected = (options: string[], selected: string[]) => {
+    return Array.from(new Set([...options, ...selected]))
+        .sort()
+        .map(item => {
+            return {label: item};
+        });
+};
+
 interface AppFilterProps {
     apps: FilteredApp[];
     pref: AppsListPreferences;
@@ -227,7 +235,6 @@ const ProjectFilter = (props: AppFilterProps) => {
             selected={props.pref.projectsFilter}
             setSelected={s => props.onChange({...props.pref, projectsFilter: s})}
             field={true}
-            flatList={true}
             options={projectOptions}
             error={error.state}
             retry={error.retry}
@@ -249,7 +256,7 @@ const ClusterFilter = (props: AppFilterProps) => {
     };
 
     const [clusters, loading, error] = useData(() => services.clusters.list());
-    const clusterOptions = optionsFrom(
+    const clusterOptions = optionsIncludingSelected(
         Array.from(new Set(props.apps.map(app => getClusterDetail(app.spec.destination, clusters)).filter(item => !!item))),
         props.pref.clustersFilter
     );
@@ -270,7 +277,10 @@ const ClusterFilter = (props: AppFilterProps) => {
 };
 
 const NamespaceFilter = (props: AppFilterProps) => {
-    const namespaceOptions = optionsFrom(Array.from(new Set(props.apps.map(app => app.spec.destination.namespace).filter(item => !!item))), props.pref.namespacesFilter);
+    const namespaceOptions = optionsIncludingSelected(
+        Array.from(new Set(props.apps.map(app => app.spec.destination.namespace).filter(item => !!item))),
+        props.pref.namespacesFilter
+    );
     return (
         <Filter
             label='NAMESPACES'
